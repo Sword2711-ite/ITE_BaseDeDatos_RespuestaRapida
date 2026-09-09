@@ -1,0 +1,84 @@
+-- Tabla base: toda persona relacionada al ITE
+CREATE TABLE PERSONA (
+    id_persona          INT PRIMARY KEY AUTO_INCREMENT,
+    nombre              VARCHAR(50)  NOT NULL,
+    apellido_paterno    VARCHAR(50)  NOT NULL,
+    apellido_materno    VARCHAR(50),
+    fecha_nacimiento    DATE,
+    tipo_sangre         VARCHAR(3),   -- ej. 'O+', 'AB-'
+    telefono            VARCHAR(15),
+    correo              VARCHAR(100)
+);
+
+-- Extiende PERSONA cuando es alumno (1:1 opcional)
+CREATE TABLE ALUMNO (
+    id_persona    INT PRIMARY KEY,
+    matricula     VARCHAR(20) NOT NULL UNIQUE,
+    carrera       VARCHAR(80) NOT NULL,
+    semestre      TINYINT,
+    FOREIGN KEY (id_persona) REFERENCES PERSONA(id_persona)
+        ON DELETE CASCADE
+);
+
+-- Extiende PERSONA cuando es empleado (1:1 opcional)
+CREATE TABLE EMPLEADO (
+    id_persona     INT PRIMARY KEY,
+    num_empleado   VARCHAR(20) NOT NULL UNIQUE,
+    puesto         VARCHAR(80) NOT NULL,
+    departamento   VARCHAR(80),
+    FOREIGN KEY (id_persona) REFERENCES PERSONA(id_persona)
+        ON DELETE CASCADE
+);
+
+-- 1:N — una persona puede tener varios contactos de emergencia
+CREATE TABLE CONTACTO_EMERGENCIA (
+    id_contacto   INT PRIMARY KEY AUTO_INCREMENT,
+    id_persona    INT NOT NULL,
+    nombre        VARCHAR(100) NOT NULL,
+    parentesco    VARCHAR(30),
+    telefono      VARCHAR(15) NOT NULL,
+    FOREIGN KEY (id_persona) REFERENCES PERSONA(id_persona)
+        ON DELETE CASCADE
+);
+
+-- Catálogo de alergias
+CREATE TABLE ALERGIA (
+    id_alergia   INT PRIMARY KEY AUTO_INCREMENT,
+    nombre       VARCHAR(80) NOT NULL UNIQUE,
+    descripcion  VARCHAR(255)
+);
+
+-- N:M entre PERSONA y ALERGIA
+CREATE TABLE PERSONA_ALERGIA (
+    id_persona   INT NOT NULL,
+    id_alergia   INT NOT NULL,
+    gravedad     VARCHAR(20),   -- ej. 'leve', 'moderada', 'severa'
+    PRIMARY KEY (id_persona, id_alergia),
+    FOREIGN KEY (id_persona) REFERENCES PERSONA(id_persona) ON DELETE CASCADE,
+    FOREIGN KEY (id_alergia) REFERENCES ALERGIA(id_alergia) ON DELETE CASCADE
+);
+
+-- Catálogo de padecimientos
+CREATE TABLE PADECIMIENTO (
+    id_padecimiento  INT PRIMARY KEY AUTO_INCREMENT,
+    nombre           VARCHAR(80) NOT NULL UNIQUE,
+    descripcion      VARCHAR(255)
+);
+
+-- N:M entre PERSONA y PADECIMIENTO
+CREATE TABLE PERSONA_PADECIMIENTO (
+    id_persona        INT NOT NULL,
+    id_padecimiento   INT NOT NULL,
+    notas             VARCHAR(255),
+    PRIMARY KEY (id_persona, id_padecimiento),
+    FOREIGN KEY (id_persona) REFERENCES PERSONA(id_persona) ON DELETE CASCADE,
+    FOREIGN KEY (id_padecimiento) REFERENCES PADECIMIENTO(id_padecimiento) ON DELETE CASCADE
+);
+
+
+Esta tabla es un modelo de prueba se puede reajustar conforme vallamos avanzando a continuación Algunas decisiones que se encuentran en el modelo y que se puede ajustar:
+-ON DELETE CASCADE en todas las FK: si se elimina una persona, se eliminan también sus contactos, alergias y padecimientos registrados. Tiene sentido para este caso, pero coméntalo con tu equipo — en un sistema real de emergencias tal vez preferirían no borrar nunca, solo desactivar (activo BOOLEAN).
+
+-AUTO_INCREMENT es sintaxis de MySQL; si usan PostgreSQL sería SERIAL o GENERATED ALWAYS AS IDENTITY.
+
+-Los campos VARCHAR tienen longitudes tentativas — vale la pena revisarlas con datos de prueba.
